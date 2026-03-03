@@ -1,76 +1,120 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="utf-8">
-  <title></title>
-  <style>
-      body {
-        background-color: lightblue;
-        text-align: center;
-      }
-      
-      .lds-ring {
-  display: inline-block;
-  position: relative;
-  width: 80px;
-  height: 80px;
-}
-.lds-ring div {
-  box-sizing: border-box;
-  display: block;
-  position: absolute;
-  width: 64px;
-  height: 64px;
-  margin: 8px;
-  border: 8px solid #fff;
-  border-radius: 50%;
-  animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: #fff transparent transparent transparent;
-}
-.lds-ring div:nth-child(1) {
-  animation-delay: -0.45s;
-}
-.lds-ring div:nth-child(2) {
-  animation-delay: -0.3s;
-}
-.lds-ring div:nth-child(3) {
-  animation-delay: -0.15s;
-}
-@keyframes lds-ring {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Viña Las Perdices</title>
+    <style>
+        /* Estilos Base Premium */
+        body {
+            background-color: #f4f1ea; /* Crema suave */
+            color: #333;
+            font-family: 'Georgia', serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        
+        .loader-container {
+            margin-bottom: 20px;
+        }
 
-  </style>
+        /* Spinner color Vino */
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e0e0e0;
+            border-top: 5px solid #722F37; /* Merlot/Vino */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            color: #2c2c2c;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 0;
+        }
+
+        p {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        #mensaje-error {
+            color: #722F37;
+            font-weight: bold;
+            padding: 20px;
+            display: none; /* Oculto por defecto */
+        }
+    </style>
 </head>
 <body>
-  <script>
-    const AS_URL_BASE = "https://script.google.com/macros/s/AKfycbwO0ZGlh27vQbUdUiHXbjyIqttWebli8WJ1vydw66R8owtzkZFN_7v0ry2WEYqNmITuEw/exec";
-    
-    var url = document.location.href;
-    var k = url.substr(url.lastIndexOf("k=")+2);
-    
-    if(k){
-      fetch(AS_URL_BASE+'?k='+k)
-      .then(r => r.text())
-      .then((r) => {
-        console.log(r);
-        //document.write(r);
-        if(r){
-          document.location.replace(r);
-        }
-      })
-      .catch(err => console.log(err))
-    }
 
-  </script>
-  
-  <div class="lds-ring"><div></div><div></div><div></div><div></div></div>
-  
-  
+    <div class="loader-container" id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <h1>Viña Las Perdices</h1>
+    <p id="texto-estado">Redireccionando tu QR</p>
+    <div id="mensaje-error"></div>
+
+    <script>
+        // --- CONFIGURACIÓN ---
+        // 1. Pega aquí la URL de tu Web App (la que termina en /exec)
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyuYAsdJYhDcnPP2v4pMRQnZQAs7ziMbxfRoklaA9J2tYod1vd-moZ98W2ps7WiZ70NaA/exec";
+        
+        // 2. Token de Seguridad (Debe coincidir con el del .gs)
+        const SEGURIDAD_TOKEN = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+
+        // Lógica de Redirección
+        window.onload = function() {
+            const params = new URLSearchParams(window.location.search);
+            const k = params.get('k'); // ID del QR
+
+            if (!k) {
+                mostrarError("Código QR no detectado.");
+                return;
+            }
+
+            // Petición Segura al Backend
+            const urlFinal = `${WEB_APP_URL}?k=${encodeURIComponent(k)}&t=${SEGURIDAD_TOKEN}`;
+
+            fetch(urlFinal)
+                .then(response => response.text())
+                .then(data => {
+                    // Si es un enlace válido (empieza por http)
+                    if (data.startsWith("http")) {
+                        window.location.replace(data);
+                    } else {
+                        // Si es un mensaje de error del script
+                        mostrarError(data);
+                    }
+                })
+                .catch(error => {
+                    mostrarError("Error de conexión. Intente nuevamente.");
+                    console.error(error);
+                });
+        };
+
+        function mostrarError(msg) {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('texto-estado').style.display = 'none';
+            const divError = document.getElementById('mensaje-error');
+            divError.style.display = 'block';
+            divError.innerText = msg;
+        }
+    </script>
 </body>
 </html>
